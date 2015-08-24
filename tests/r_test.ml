@@ -1,4 +1,4 @@
-#require "maxminddb, podge"
+#require "maxminddb"
 
 let city = "etc/GeoLite2-City.mmdb"
 let country = "etc/GeoLite2-Country.mmdb"
@@ -6,9 +6,6 @@ let country = "etc/GeoLite2-Country.mmdb"
 let raw = "172.56.31.240"
 
 let () =
-  let t = Maxminddb.create city in
-  Podge.ANSITerminal.colored_message "Opened DB" |> Podge.Printf.printfn "%s";
-  (* Maxminddb.dump raw t |> print_endline; *)
-  Maxminddb.lookup_path raw ["postal";"code"] t |> print_endline;
-  Maxminddb.close t;
-  Podge.ANSITerminal.colored_message "Closed DB" |> Podge.Printf.printfn "%s";
+  Maxminddb.with_mmdb city begin fun this_mmdb ->
+    Maxminddb.postal_code raw this_mmdb |> print_endline;
+  end

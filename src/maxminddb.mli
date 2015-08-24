@@ -23,3 +23,6 @@ external lookup_path : ip:string -> query:string list -> mmdb -> string =
 
 (** Short cut function for getting postal code from ip address *)
 val postal_code : ip:string -> mmdb -> string
+
+(** Convenience function that opens and closes a mmdb for you *)
+val with_mmdb : path:string -> (mmdb -> 'a) -> unit

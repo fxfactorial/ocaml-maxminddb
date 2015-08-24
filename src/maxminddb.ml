@@ -14,3 +14,8 @@ external lookup_path : ip:string -> query:string list -> mmdb -> string =
 
 let postal_code ~ip mmdb =
   lookup_path ip ["postal";"code"] mmdb
+
+let with_mmdb ~path f =
+  let this_mmdb = create path in
+  f this_mmdb |> ignore;
+  close this_mmdb

@@ -2,16 +2,16 @@ Maxminddb is an OCaml binding to [libmaxminddb](https://github.com/maxmind/libma
 the successor of [GeoIP Legacy (Previously known as
 GeoIP)](http://dev.maxmind.com/geoip/).
 
-# Example
+# Examples
 
 Once you have `maxminddb` installed, try out the following example
 
 ```ocaml
 (* This file is named dump_stats.ml *)
 #require "maxminddb"
-let city = "etc/GeoLite2-City.mmdb"
+
 let () =
-  Maxminddb.create city
+  Maxminddb.create "etc/GeoLite2-City.mmdb"
   |> Maxminddb.dump Sys.argv.(1) |> print_endline;
   Maxminddb.close t
 ```
@@ -29,14 +29,8 @@ $ utop dump_stats.ml "172.56.31.240"
           {
             "de": 
               "Compton" <utf8_string>
-            "en": 
-              "Compton" <utf8_string>
-            "fr": 
-              "Compton" <utf8_string>
-            "ja": 
-              "コンプトン" <utf8_string>
-            "ru": 
-              "Комптон" <utf8_string>
+            .
+            .
             "zh-CN": 
               "康普顿" <utf8_string>
           }
@@ -47,8 +41,24 @@ $ utop dump_stats.ml "172.56.31.240"
           "NA" <utf8_string>
         "geoname_id": 
           6255149 <uint32>
-        "names": 
 .
 .
-.
+```
+
+Here's an even shorter example: 
+
+```ocaml
+(* File named zip_of_ip.ml *)
+#require "maxminddb"
+let () = 
+  Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb ->
+    Maxminddb.postal_code "172.56.31.240" this_mmdb |> print_endline;
+  end
+```
+
+And the corresponding result on the shell
+
+```ocaml
+$ utop zip_of_ip.ml
+90221
 ```
