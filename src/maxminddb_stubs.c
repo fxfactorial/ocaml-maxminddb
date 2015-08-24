@@ -126,10 +126,3 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 	memcpy(clean_result, entry_data.bytes, entry_data.data_size);
 	return caml_copy_string(clean_result);
 }
-
-/* CAMLprim value mmdb_ml_pull_result(value ip, value mmdb) */
-/* { */
-/* 	char *ip_as_string = String_val(ip); */
-/* 	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb); */
-/* 	return caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag); */
-/* } */

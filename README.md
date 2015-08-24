@@ -11,8 +11,8 @@ Once you have `maxminddb` installed, try out the following example
 #require "maxminddb"
 let city = "etc/GeoLite2-City.mmdb"
 let () =
-  let t = Maxminddb.init city in
-  Maxminddb.dump_lookup Sys.argv.(1) t |> print_endline;
+  Maxminddb.create city
+  |> Maxminddb.dump Sys.argv.(1) |> print_endline;
   Maxminddb.close t
 ```
 
