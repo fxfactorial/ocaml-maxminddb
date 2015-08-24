@@ -1,7 +1,7 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
-Name:         maxminddb
-Version:      0.4
+Name:         ocaml-maxminddb
+Version:      0.1
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
 Synopsis:     Bindings to libmaxminddb, like geoip
@@ -9,7 +9,16 @@ Authors:      Edgar Aroutiounian <edgar.factorial@gmail.com>
 License:      BSD-3-clause
 Plugins:      META (0.4), DevFiles (0.4)
 Description:
-  Bindings to maxminddb, used for geoip2
+  Bindings to Maxmind.com's libmaxminddb library.
+
+  Maxminddb provides OCaml bindings to MaxMind's libmaxminddb C
+  library, libmaxminddb is the database powering GeoIP2.  GeoIP2
+  provides geographical/geolocation information about ip addresses
+  like city of origin, country of origin and more. This library comes
+  with the the free GeoLite2 City and Country MaxMindDB files.
+
+  This product includes GeoLite2 data created by MaxMind, available
+  from <a href="http://www.maxmind.com">http://www.maxmind.com</a>.
 
 AlphaFeatures: ocamlbuild_more_args
 
@@ -17,7 +26,6 @@ Library maxminddb
   Path:src
   BuildTools:ocamlbuild
   install:true
-  BuildDepends:yojson
   CClib: -lmaxminddb
   CCOpt: -g
   Modules:Maxminddb

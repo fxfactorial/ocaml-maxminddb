@@ -4,7 +4,7 @@ GeoIP)](http://dev.maxmind.com/geoip/).
 
 # Examples
 
-Once you have `maxminddb` installed, try out the following example
+I assume you have `libmaxminddb` already installed on your system.
 
 ```ocaml
 (* This file is named dump_stats.ml *)
@@ -45,7 +45,8 @@ $ utop dump_stats.ml "172.56.31.240"
 .
 ```
 
-Here's an even shorter example: 
+Here's an even shorter example that uses a convenience function that
+closes the `mmdb` handle for you.
 
 ```ocaml
 (* File named zip_of_ip.ml *)
