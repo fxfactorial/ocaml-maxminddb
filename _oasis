@@ -19,5 +19,6 @@ Library maxminddb
   install:true
   BuildDepends:yojson
   CClib: -lmaxminddb
+  CCOpt: -g
   Modules:Maxminddb
   CSources: maxminddb_stubs.c

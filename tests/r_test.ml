@@ -8,6 +8,7 @@ let raw = "172.56.31.240"
 let () =
   let t = Maxminddb.init city in
   Podge.ANSITerminal.colored_message "Opened DB" |> Podge.Printf.printfn "%s";
-  Maxminddb.dump_lookup raw t |> print_endline;
+  (* Maxminddb.dump raw t |> print_endline; *)
+  Maxminddb.lookup_path raw ["postal";"code"] t |> print_endline;
   Maxminddb.close t;
   Podge.ANSITerminal.colored_message "Closed DB" |> Podge.Printf.printfn "%s";

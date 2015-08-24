@@ -60,7 +60,7 @@ static char* pull_all_data(FILE *f)
 	return buffer;
 }
 
-CAMLprim value mmdb_ml_lookup_string(value ip, value mmdb)
+CAMLprim value mmdb_ml_dump(value ip, value mmdb)
 {
 	char *as_string = String_val(ip);
 	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
@@ -87,3 +87,49 @@ CAMLprim value mmdb_ml_lookup_string(value ip, value mmdb)
 	remove(temp_name);
 	return caml_copy_string(pulled_from_db);
 }
+
+CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
+{
+	int total_len = 0, copy_count = 0, gai_error, mmdb_error;
+	value iter_count = query_list;
+	char *ip_as_str = String_val(ip);
+	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
+
+	value raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
+	MMDB_lookup_result_s *result =
+		(MMDB_lookup_result_s*)Data_custom_val(raw);
+	*result =
+		MMDB_lookup_string(as_mmdb, ip_as_str, &gai_error, &mmdb_error);
+
+	while (iter_count != Val_emptylist) {
+		total_len++;
+		iter_count = Field(iter_count, 1);
+	}
+
+	char **query = malloc(sizeof(char *) * (total_len + 1));
+
+	while (query_list != Val_emptylist) {
+		query[copy_count] = String_val(Field(query_list, 0));
+		copy_count++;
+		query_list = Field(query_list, 1);
+	}
+	query[total_len] = NULL;
+	MMDB_entry_data_s entry_data;
+
+	int status = MMDB_aget_value(&result->entry, &entry_data, query);
+
+	if (MMDB_SUCCESS != status) {
+		printf("raise an exception\n");
+	}
+
+	char clean_result[entry_data.data_size];
+	memcpy(clean_result, entry_data.bytes, entry_data.data_size);
+	return caml_copy_string(clean_result);
+}
+
+/* CAMLprim value mmdb_ml_pull_result(value ip, value mmdb) */
+/* { */
+/* 	char *ip_as_string = String_val(ip); */
+/* 	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb); */
+/* 	return caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag); */
+/* } */
