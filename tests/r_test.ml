@@ -7,5 +7,7 @@ let raw = "172.56.31.240"
 
 let () =
   Maxminddb.with_mmdb city begin fun this_mmdb ->
-    Maxminddb.postal_code raw this_mmdb |> print_endline;
+    Maxminddb.postal_code raw this_mmdb
+    (* |> Maxminddb.address_of_zip *)
+    |> print_endline
   end

@@ -12,7 +12,7 @@
 
 #include <maxminddb.h>
 
-CAMLprim value mmdb_ml_version(value __unused v_unit)
+CAMLprim value mmdb_ml_version(value v_unit)
 {
 	return caml_copy_string(MMDB_lib_version());
 }
@@ -35,7 +35,6 @@ CAMLprim value mmdb_ml_open(value s)
 		}
 		exit(1);
 	}
-	//return (value)as_mmdb;
 	return raw;
 }
 
