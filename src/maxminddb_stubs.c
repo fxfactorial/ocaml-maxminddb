@@ -12,7 +12,7 @@
 
 #include <maxminddb.h>
 
-CAMLprim value mmdb_ml_version(value __unused v_unit)
+CAMLprim value mmdb_ml_version(value v_unit)
 {
 	return caml_copy_string(MMDB_lib_version());
 }
@@ -35,7 +35,6 @@ CAMLprim value mmdb_ml_open(value s)
 		}
 		exit(1);
 	}
-	//return (value)as_mmdb;
 	return raw;
 }
 
@@ -76,7 +75,7 @@ CAMLprim value mmdb_ml_dump(value ip, value mmdb)
 	int status = MMDB_get_entry_data_list(&result->entry, &entry_data_list);
 
 	if (status != MMDB_SUCCESS) {
-		printf("Something messed up, need to raise exception\n");
+		caml_failwith("Could not do a dump of the Database");
 	}
 	char temp_name[] = "/tmp/ocaml-maxminddb-XXXXXX";
 	mkstemp(temp_name);
@@ -116,10 +115,10 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 	query[total_len] = NULL;
 	MMDB_entry_data_s entry_data;
 
-	int status = MMDB_aget_value(&result->entry, &entry_data, query);
+	int status = MMDB_aget_value(&result->entry, &entry_data, (const char *const *const)query);
 
 	if (MMDB_SUCCESS != status) {
-		printf("raise an exception\n");
+		caml_invalid_argument("Bad lookup path provided");
 	}
 
 	char clean_result[entry_data.data_size];

@@ -25,6 +25,7 @@ AlphaFeatures: ocamlbuild_more_args
 Library maxminddb
   Path:src
   BuildTools:ocamlbuild
+  # BuildDepends:podge
   install:true
   CClib: -lmaxminddb
   CCOpt: -g
