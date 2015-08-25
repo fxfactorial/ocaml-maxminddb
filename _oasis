@@ -1,6 +1,6 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
-Name:         ocaml-maxminddb
+Name:         maxminddb
 Version:      0.1
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
@@ -26,8 +26,19 @@ Library maxminddb
   Path:src
   BuildTools:ocamlbuild
   # BuildDepends:podge
-  install:true
+  install: true
   CClib: -lmaxminddb
-  CCOpt: -g
+  CCOpt: -g -Wextra -Wall
   Modules:Maxminddb
+  CompiledObject: best
   CSources: maxminddb_stubs.c
+
+Document api
+  Title: API reference for maxminddb
+  Type: ocamlbuild (0.4)
+  Authors: Edgar Aroutiounian
+  BuildTools: ocamldoc, ocamlbuild
+  Format: HTML
+  Index: index.html
+  XOCamlbuildPath: .
+  XOCamlbuildLibraries: maxminddb

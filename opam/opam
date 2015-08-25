@@ -1,5 +1,5 @@
 opam-version: "1.2"
-name: "ocaml-maxminddb"
+name: "maxminddb"
 version: "0.1"
 maintainer: "Edgar Aroutiounian <edgar.factorial@gmail.com>"
 authors: [ "Edgar Aroutiounian <edgar.factorial@gmail.com>" ]
@@ -23,6 +23,7 @@ build-test: [
   ["ocaml" "setup.ml" "-build"]
   ["ocaml" "setup.ml" "-test"]
 ]
+build-doc: [ "ocaml" "setup.ml" "-doc" ]
 depends: [
   "oasis" {build & >= "0.4"}
   "ocamlfind" {build}

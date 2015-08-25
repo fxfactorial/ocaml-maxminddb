@@ -1,3 +1,6 @@
+(** Maxmind is a binding to libmaxminddb with some higher level
+    functionality *)
+
 type mmdb
 
 (** Get version string of Maxminddb *)
