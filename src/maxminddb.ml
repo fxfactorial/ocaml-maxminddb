@@ -1,6 +1,6 @@
 type mmdb
 
-external version_raw : unit -> string = "mmdb_ml_version"
+external version : unit -> string = "mmdb_ml_version"
 
 external create : path:string -> mmdb = "mmdb_ml_open"
 
@@ -17,9 +17,6 @@ let without_null s =
 
 let dump ~ip mmdb =
   dump_raw ~ip mmdb |> without_null
-
-let version () =
-  version_raw () |> without_null
 
 let lookup_path ~ip ~query mmdb =
   lookup_path_raw ~ip ~query mmdb |> without_null
