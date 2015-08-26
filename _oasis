@@ -4,12 +4,12 @@ Name:         maxminddb
 Version:      0.1
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
-Synopsis:     Bindings to libmaxminddb, like geoip
+Synopsis:     Bindings to libmaxminddb, like geoip2
 Authors:      Edgar Aroutiounian <edgar.factorial@gmail.com>
 License:      BSD-3-clause
 Plugins:      META (0.4), DevFiles (0.4)
 Description:
-  Bindings to Maxmind.com's libmaxminddb library.
+  Bindings to Maxmind.com's libmaxminddb library, like geoip2
 
   Maxminddb provides OCaml bindings to MaxMind's libmaxminddb C
   library, libmaxminddb is the database powering GeoIP2.  GeoIP2

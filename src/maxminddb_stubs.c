@@ -10,7 +10,62 @@
 #include <caml/memory.h>
 #include <caml/fail.h>
 
+#define Val_none Val_int(0)
+
+static value
+Val_some(value v)
+{
+    CAMLparam1(v);
+    CAMLlocal1(some);
+    some = caml_alloc(1, 0);
+    Store_field(some, 0, v);
+    CAMLreturn(some);
+}
+
 #include <maxminddb.h>
+
+static char* pull_all_data(FILE *f)
+{
+	int size = 0;
+	fseek(f, 0, SEEK_END);
+	size = ftell(f);
+	rewind(f);
+	char *buffer = malloc(size);
+	fread(buffer, size, 1, f);
+	fflush(f);
+	return buffer;
+}
+
+void check_error(int gai_error, int mmdb_error)
+{
+	if (gai_error) {
+		printf("Some GAIerror\n");
+		caml_failwith((const char *)MMDB_strerror(gai_error));
+	}
+	if (mmdb_error) {
+		printf("some mmdb_error\n");
+		caml_failwith((const char *)MMDB_strerror(mmdb_error));
+	}
+}
+
+void check_status(int status)
+{
+	if (MMDB_SUCCESS != status) {
+		caml_invalid_argument((const char *)MMDB_strerror(status));
+	}
+}
+
+char *data_from_dump(MMDB_entry_data_list_s *entry_data_list)
+{
+	char temp_name[] = "/tmp/ocaml-maxminddb-XXXXXX";
+	mkstemp(temp_name);
+	FILE *f = fopen(temp_name, "r+wb");
+	MMDB_dump_entry_data_list(f, entry_data_list, 2);
+	char *pulled_from_db = pull_all_data(f);
+	fclose(f);
+	remove(temp_name);
+	return pulled_from_db;
+}
 
 CAMLprim value mmdb_ml_version(value v_unit)
 {
@@ -30,12 +85,8 @@ CAMLprim value mmdb_ml_open(value s)
 	char *as_string = String_val(s);
 	raw = caml_alloc(sizeof(MMDB_s), Abstract_tag);
 	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(raw);
-
 	int status = MMDB_open(as_string, MMDB_MODE_MMAP, as_mmdb);
-
-	if (MMDB_SUCCESS != status) {
-		caml_failwith((const char *)MMDB_strerror(status));
-	}
+	check_status(status);
 	CAMLreturn(raw);
 }
 
@@ -48,19 +99,24 @@ CAMLprim value mmdb_ml_close(value mmdb)
 	CAMLreturn(Val_unit);
 }
 
-static char* pull_all_data(FILE *f)
+CAMLprim value mmdb_ml_dump_global(value mmdb)
 {
-	int size = 0;
-	fseek(f, 0, SEEK_END);
-	size = ftell(f);
-	rewind(f);
-	char *buffer = malloc(size);
-	fread(buffer, size, 1, f);
-	fflush(f);
-	return buffer;
+	CAMLparam1(mmdb);
+	CAMLlocal2(raw, pulled_string);
+
+	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
+	MMDB_entry_data_list_s *entry_data_list = NULL;
+
+	int status = MMDB_get_metadata_as_entry_data_list(as_mmdb,
+							  &entry_data_list);
+	check_status(status);
+	char *pulled_from_db = data_from_dump(entry_data_list);
+	pulled_string = caml_copy_string(pulled_from_db);
+	free(pulled_from_db);
+	CAMLreturn(pulled_string);
 }
 
-CAMLprim value mmdb_ml_dump(value ip, value mmdb)
+CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 {
 	CAMLparam2(ip, mmdb);
 	CAMLlocal2(raw, pulled_string);
@@ -73,18 +129,8 @@ CAMLprim value mmdb_ml_dump(value ip, value mmdb)
 	*result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
 	MMDB_entry_data_list_s *entry_data_list = NULL;
 	int status = MMDB_get_entry_data_list(&result->entry, &entry_data_list);
-
-	if (status != MMDB_SUCCESS) {
-		caml_failwith((const char *)MMDB_strerror(status));
-	}
-
-	char temp_name[] = "/tmp/ocaml-maxminddb-XXXXXX";
-	mkstemp(temp_name);
-	FILE *f = fopen(temp_name, "r+wb");
-	MMDB_dump_entry_data_list(f, entry_data_list, 2);
-	char *pulled_from_db = pull_all_data(f);
-	fclose(f);
-	remove(temp_name);
+	check_status(status);
+	char *pulled_from_db = data_from_dump(entry_data_list);
 	pulled_string = caml_copy_string(pulled_from_db);
 	free(pulled_from_db);
 	CAMLreturn(pulled_string);
@@ -102,14 +148,8 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 	raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
 	MMDB_lookup_result_s *result =
 		(MMDB_lookup_result_s*)Data_custom_val(raw);
-	*result =
-		MMDB_lookup_string(as_mmdb, ip_as_str, &gai_error, &mmdb_error);
-	if (gai_error) {
-		caml_failwith((const char *)MMDB_strerror(gai_error));
-	}
-	if (mmdb_error) {
-		caml_failwith((const char *)MMDB_strerror(mmdb_error));
-	}
+	*result = MMDB_lookup_string(as_mmdb, ip_as_str, &gai_error, &mmdb_error);
+	check_error(gai_error, mmdb_error);
 
 	while (iter_count != Val_emptylist) {
 		total_len++;
@@ -129,10 +169,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 	int status = MMDB_aget_value(&result->entry,
 				     &entry_data,
 				     (const char *const *const)query);
-
-	if (MMDB_SUCCESS != status) {
-		caml_invalid_argument((const char *)MMDB_strerror(status));
-	}
+	check_status(status);
 
 	char clean_result[entry_data.data_size];
 	memcpy(clean_result, entry_data.bytes, entry_data.data_size);
