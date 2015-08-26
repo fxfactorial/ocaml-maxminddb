@@ -10,7 +10,8 @@ val version : unit -> string
     file. Maxminddb comes with City, Country databases in etc *)
 val create : path:string -> mmdb
 
-(** Close a handle on a mmdb descriptor *)
+(** Close a handle on a mmdb descriptor, bad things will happen if you
+    try to use the handle after you called closed on it. *)
 val close : mmdb -> unit
 
 (** Dumps the database as a string, do not depend on this structure:
@@ -27,5 +28,3 @@ val postal_code : ip:string -> mmdb -> string
 
 (** Convenience function that opens and closes a mmdb for you *)
 val with_mmdb : path:string -> (mmdb -> 'a) -> unit
-
-(* val address_of_zip : string -> string *)

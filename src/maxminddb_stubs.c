@@ -34,13 +34,7 @@ CAMLprim value mmdb_ml_open(value s)
 	int status = MMDB_open(as_string, MMDB_MODE_MMAP, as_mmdb);
 
 	if (MMDB_SUCCESS != status) {
-		fprintf(stderr, "\n  Can't open %s - %s\n",
-			as_string, MMDB_strerror(status));
-
-		if (MMDB_IO_ERROR == status) {
-			fprintf(stderr, "    IO error: %s\n", strerror(errno));
-		}
-		exit(1);
+		caml_failwith((const char *)MMDB_strerror(status));
 	}
 	CAMLreturn(raw);
 }
@@ -81,7 +75,7 @@ CAMLprim value mmdb_ml_dump(value ip, value mmdb)
 	int status = MMDB_get_entry_data_list(&result->entry, &entry_data_list);
 
 	if (status != MMDB_SUCCESS) {
-		caml_failwith("Could not do a dump of the Database");
+		caml_failwith((const char *)MMDB_strerror(status));
 	}
 
 	char temp_name[] = "/tmp/ocaml-maxminddb-XXXXXX";
@@ -100,7 +94,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 {
 	CAMLparam3(ip, query_list, mmdb);
 	CAMLlocal3(iter_count, raw, caml_clean_result);
-	int total_len = 0, copy_count = 0, gai_error, mmdb_error;
+	int total_len = 0, copy_count = 0, gai_error = 0, mmdb_error = 0;
 	iter_count = query_list;
 	char *ip_as_str = String_val(ip);
 	MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
@@ -110,6 +104,12 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 		(MMDB_lookup_result_s*)Data_custom_val(raw);
 	*result =
 		MMDB_lookup_string(as_mmdb, ip_as_str, &gai_error, &mmdb_error);
+	if (gai_error) {
+		caml_failwith((const char *)MMDB_strerror(gai_error));
+	}
+	if (mmdb_error) {
+		caml_failwith((const char *)MMDB_strerror(mmdb_error));
+	}
 
 	while (iter_count != Val_emptylist) {
 		total_len++;
@@ -131,7 +131,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 				     (const char *const *const)query);
 
 	if (MMDB_SUCCESS != status) {
-		caml_invalid_argument("Bad lookup path provided");
+		caml_invalid_argument((const char *)MMDB_strerror(status));
 	}
 
 	char clean_result[entry_data.data_size];
