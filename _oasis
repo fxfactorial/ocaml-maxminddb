@@ -28,7 +28,7 @@ Library maxminddb
   # BuildDepends:podge
   install: true
   CClib: -lmaxminddb
-  CCOpt: -g -Wextra -Wall
+  CCOpt: -g -Wextra -Wall -std=c99
   Modules:Maxminddb
   CompiledObject: best
   CSources: maxminddb_stubs.c

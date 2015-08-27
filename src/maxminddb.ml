@@ -18,12 +18,16 @@ external lookup_path_raw : ip:string -> query:string list -> mmdb -> string =
 let without_null s =
   String.sub s 0 (String.length s - 1)
 
-let dump ?ip mmdb = match ip with
-  | None -> dump_global_raw mmdb |> without_null
-  | Some ip -> dump_per_ip_raw ip mmdb |> without_null
+let dump ?ip mmdb =
+  (match ip with
+   | None -> dump_global_raw mmdb
+   | Some ip -> dump_per_ip_raw ip mmdb)
+  |> without_null
 
 let lookup_path ~ip ~query mmdb =
-  lookup_path_raw ~ip ~query mmdb |> without_null
+  match query with
+  | [] -> raise (Invalid_argument "Must provide non empty query path")
+  | _ -> lookup_path_raw ~ip ~query mmdb
 
 let postal_code ~ip mmdb =
   lookup_path ip ["postal";"code"] mmdb

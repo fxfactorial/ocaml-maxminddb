@@ -15,11 +15,11 @@
 static value
 Val_some(value v)
 {
-    CAMLparam1(v);
-    CAMLlocal1(some);
-    some = caml_alloc(1, 0);
-    Store_field(some, 0, v);
-    CAMLreturn(some);
+	CAMLparam1(v);
+	CAMLlocal1(some);
+	some = caml_alloc(1, 0);
+	Store_field(some, 0, v);
+	CAMLreturn(some);
 }
 
 #include <maxminddb.h>
@@ -39,11 +39,9 @@ static char* pull_all_data(FILE *f)
 void check_error(int gai_error, int mmdb_error)
 {
 	if (gai_error) {
-		printf("Some GAIerror\n");
 		caml_failwith((const char *)MMDB_strerror(gai_error));
 	}
 	if (mmdb_error) {
-		printf("some mmdb_error\n");
 		caml_failwith((const char *)MMDB_strerror(mmdb_error));
 	}
 }
@@ -53,6 +51,12 @@ void check_status(int status)
 	if (MMDB_SUCCESS != status) {
 		caml_invalid_argument((const char *)MMDB_strerror(status));
 	}
+}
+
+void check_data(MMDB_entry_data_s entry_data)
+{
+	if (!entry_data.has_data)
+		caml_failwith("No data available");
 }
 
 char *data_from_dump(MMDB_entry_data_list_s *entry_data_list)
@@ -108,7 +112,7 @@ CAMLprim value mmdb_ml_dump_global(value mmdb)
 	MMDB_entry_data_list_s *entry_data_list = NULL;
 
 	int status = MMDB_get_metadata_as_entry_data_list(as_mmdb,
-							  &entry_data_list);
+													  &entry_data_list);
 	check_status(status);
 	char *pulled_from_db = data_from_dump(entry_data_list);
 	pulled_string = caml_copy_string(pulled_from_db);
@@ -167,13 +171,56 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 	MMDB_entry_data_s entry_data;
 
 	int status = MMDB_aget_value(&result->entry,
-				     &entry_data,
-				     (const char *const *const)query);
+								 &entry_data,
+								 (const char *const *const)query);
 	check_status(status);
+	check_data(entry_data);
+	char *clean_result;
 
-	char clean_result[entry_data.data_size];
-	memcpy(clean_result, entry_data.bytes, entry_data.data_size);
+	switch (entry_data.type) {
+	case MMDB_DATA_TYPE_BYTES: {
+		clean_result = malloc(entry_data.data_size + 1);
+		memcpy(clean_result, entry_data.bytes, entry_data.data_size);
+		break;
+	}
+	case MMDB_DATA_TYPE_UTF8_STRING: {
+		clean_result = malloc(entry_data.data_size + 1);
+		memcpy(clean_result, entry_data.utf8_string, entry_data.data_size);
+		break;
+	}
+	case MMDB_DATA_TYPE_FLOAT: {
+		clean_result = malloc(48);
+		sprintf(clean_result, "%f", entry_data.float_value);
+		break;
+
+	}
+	case MMDB_DATA_TYPE_BOOLEAN: {
+		clean_result = malloc((entry_data.boolean ? 4 : 5) + 1);
+		sprintf(clean_result, "%s", entry_data.boolean ? "true" : "false");
+		break;
+	}
+	case MMDB_DATA_TYPE_DOUBLE: {
+		clean_result = malloc(48);
+		sprintf(clean_result, "%f", entry_data.double_value);
+		break;
+	}
+	case MMDB_DATA_TYPE_UINT16: {
+		clean_result = malloc(5 + 1);
+		sprintf(clean_result, "%d", entry_data.uint16);
+		break;
+	}
+	case MMDB_DATA_TYPE_UINT32: {
+		clean_result = malloc(10 + 1);
+		sprintf(clean_result, "%d", entry_data.uint32);
+		break;
+	}
+	case MMDB_DATA_TYPE_ARRAY:
+	case MMDB_DATA_TYPE_MAP:
+		caml_failwith("Can't return a Map or Array yet");
+	}
+
 	caml_clean_result = caml_copy_string(clean_result);
 	free(query);
+	free(clean_result);
 	CAMLreturn(caml_clean_result);
 }
