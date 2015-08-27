@@ -28,8 +28,10 @@ static char* pull_all_data(FILE *f)
 {
 	int size = 0;
 	fseek(f, 0, SEEK_END);
+	fflush(f);
 	size = ftell(f);
 	rewind(f);
+	fflush(f);
 	char *buffer = malloc(size);
 	fread(buffer, size, 1, f);
 	fflush(f);
@@ -65,6 +67,7 @@ char *data_from_dump(MMDB_entry_data_list_s *entry_data_list)
 	mkstemp(temp_name);
 	FILE *f = fopen(temp_name, "r+wb");
 	MMDB_dump_entry_data_list(f, entry_data_list, 2);
+	fflush(f);
 	char *pulled_from_db = pull_all_data(f);
 	fclose(f);
 	remove(temp_name);
@@ -192,7 +195,6 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 		clean_result = malloc(48);
 		sprintf(clean_result, "%f", entry_data.float_value);
 		break;
-
 	}
 	case MMDB_DATA_TYPE_BOOLEAN: {
 		clean_result = malloc((entry_data.boolean ? 4 : 5) + 1);
@@ -214,6 +216,12 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 		sprintf(clean_result, "%d", entry_data.uint32);
 		break;
 	}
+	case MMDB_DATA_TYPE_UINT64: {
+		clean_result = malloc(20 + 1);
+		sprintf(clean_result, "%d", entry_data.uint64);
+		break;
+	}
+	// look at /usr/bin/sed -n 1380,1430p src/maxminddb.c
 	case MMDB_DATA_TYPE_ARRAY:
 	case MMDB_DATA_TYPE_MAP:
 		caml_failwith("Can't return a Map or Array yet");

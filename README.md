@@ -84,6 +84,10 @@ $ utop dump_using_array.ml
 
 # Issues
 
-If your path yields a map or array then the library will throw an
-exception, this is mostly an implementation issue. I haven't thought
-about how I want to do it yet.
+1.  If your path yields a map or array then the library will throw an
+    exception, this is mostly an implementation issue. I haven't
+    thought about how I want to do it yet.
+2.  Sometimes there's junk at the end of string for a DB dump. This is
+    because of the awkward C API where the dump function expects a
+    `FILE *` and I don't have access to [fmemopen](http://pubs.opengroup.org/onlinepubs/9699919799/functions/fmemopen.html) since I am
+    primarily developing this library on `OS X`.
