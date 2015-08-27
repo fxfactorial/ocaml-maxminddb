@@ -114,8 +114,7 @@ CAMLprim value mmdb_ml_dump_global(value mmdb)
   MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
   MMDB_entry_data_list_s *entry_data_list = NULL;
 
-  int status = MMDB_get_metadata_as_entry_data_list(as_mmdb,
-						    &entry_data_list);
+  int status = MMDB_get_metadata_as_entry_data_list(as_mmdb, &entry_data_list);
   check_status(status);
   char *pulled_from_db = data_from_dump(entry_data_list);
   pulled_string = caml_copy_string(pulled_from_db);
@@ -130,7 +129,7 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 
   char *as_string = String_val(ip);
   MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
-  int gai_error, mmdb_error;
+  int gai_error = 0, mmdb_error = 0;
   raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
   MMDB_lookup_result_s *result = (MMDB_lookup_result_s*)Data_custom_val(raw);
   *result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
@@ -147,14 +146,14 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 {
   CAMLparam3(ip, query_list, mmdb);
   CAMLlocal3(iter_count, raw, caml_clean_result);
+
   int total_len = 0, copy_count = 0, gai_error = 0, mmdb_error = 0;
   iter_count = query_list;
   char *ip_as_str = String_val(ip);
   MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
 
   raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
-  MMDB_lookup_result_s *result =
-    (MMDB_lookup_result_s*)Data_custom_val(raw);
+  MMDB_lookup_result_s *result = (MMDB_lookup_result_s*)Data_custom_val(raw);
   *result = MMDB_lookup_string(as_mmdb, ip_as_str, &gai_error, &mmdb_error);
   check_error(gai_error, mmdb_error);
 
@@ -163,7 +162,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
     iter_count = Field(iter_count, 1);
   }
 
-  char **query = malloc(sizeof(char *) * (total_len + 1));
+  char **query = caml_stat_alloc(sizeof(char *) * (total_len + 1));
 
   while (query_list != Val_emptylist) {
     query[copy_count] = String_val(Field(query_list, 0));
@@ -218,12 +217,13 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   }
   case MMDB_DATA_TYPE_UINT64: {
     clean_result = malloc(20 + 1);
-    sprintf(clean_result, "%d", entry_data.uint64);
+    sprintf(clean_result, "%llu", entry_data.uint64);
     break;
   }
     // look at /usr/bin/sed -n 1380,1430p src/maxminddb.c
   case MMDB_DATA_TYPE_ARRAY:
   case MMDB_DATA_TYPE_MAP:
+    free(query);
     caml_failwith("Can't return a Map or Array yet");
   }
 
