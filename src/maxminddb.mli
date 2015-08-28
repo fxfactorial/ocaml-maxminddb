@@ -6,6 +6,8 @@
     in memory *)
 type mmdb
 
+type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
+
 (** Get version string of Maxminddb *)
 val version : unit -> string
 
@@ -27,7 +29,7 @@ val dump : ?ip:string -> mmdb -> string
 (** For a given ip address, think 127.0.0.1, query path and mmdb
     handle, get the result. Note path must be safe, look at dump
     first *)
-val lookup_path : ip:string -> query:string list -> mmdb -> string
+val lookup_path : ip:string -> query:string list -> mmdb -> query_r
 
 (** Short cut function for getting postal code from ip address *)
 val postal_code : ip:string -> mmdb -> string

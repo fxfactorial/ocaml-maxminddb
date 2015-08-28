@@ -12,11 +12,16 @@
 
 #define Val_none Val_int(0)
 
-static value
-Val_some(value v)
+#define POLY_STRING (-1953941021)
+#define POLY_INT 7309727
+#define POLY_FLOAT 730360569
+#define POLY_BOOL 1474912405
+
+static value Val_some(value v)
 {
   CAMLparam1(v);
   CAMLlocal1(some);
+
   some = caml_alloc(1, 0);
   Store_field(some, 0, v);
   CAMLreturn(some);
@@ -145,9 +150,12 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 {
   CAMLparam3(ip, query_list, mmdb);
-  CAMLlocal3(iter_count, raw, caml_clean_result);
+  CAMLlocal4(iter_count, raw, caml_clean_result, query_r);
 
   int total_len = 0, copy_count = 0, gai_error = 0, mmdb_error = 0;
+  char *clean_result;
+  long int int_result;
+
   iter_count = query_list;
   char *ip_as_str = String_val(ip);
   MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
@@ -177,58 +185,66 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 			       (const char *const *const)query);
   check_status(status);
   check_data(entry_data);
-  char *clean_result;
+  free(query);
+  query_r = caml_alloc(2, 0);
+
 
   switch (entry_data.type) {
   case MMDB_DATA_TYPE_BYTES: {
     clean_result = malloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.bytes, entry_data.data_size);
-    break;
+    goto string_finish;
+
   }
   case MMDB_DATA_TYPE_UTF8_STRING: {
     clean_result = malloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.utf8_string, entry_data.data_size);
-    break;
+    goto string_finish;
   }
-  case MMDB_DATA_TYPE_FLOAT: {
-    clean_result = malloc(48);
-    sprintf(clean_result, "%f", entry_data.float_value);
-    break;
-  }
-  case MMDB_DATA_TYPE_BOOLEAN: {
-    clean_result = malloc((entry_data.boolean ? 4 : 5) + 1);
-    sprintf(clean_result, "%s", entry_data.boolean ? "true" : "false");
-    break;
-  }
-  case MMDB_DATA_TYPE_DOUBLE: {
-    clean_result = malloc(48);
-    sprintf(clean_result, "%f", entry_data.double_value);
-    break;
-  }
-  case MMDB_DATA_TYPE_UINT16: {
-    clean_result = malloc(5 + 1);
-    sprintf(clean_result, "%d", entry_data.uint16);
-    break;
-  }
+  /* case MMDB_DATA_TYPE_FLOAT: { */
+  /*   clean_result = malloc(48); */
+  /*   sprintf(clean_result, "%f", entry_data.float_value); */
+  /*   break; */
+  /* } */
+  /* case MMDB_DATA_TYPE_BOOLEAN: { */
+  /*   clean_result = malloc((entry_data.boolean ? 4 : 5) + 1); */
+  /*   sprintf(clean_result, "%s", entry_data.boolean ? "true" : "false"); */
+  /*   break; */
+  /* } */
+  /* case MMDB_DATA_TYPE_DOUBLE: { */
+  /*   clean_result = malloc(48); */
+  /*   sprintf(clean_result, "%f", entry_data.double_value); */
+  /*   break; */
+  /* } */
+  /* case MMDB_DATA_TYPE_UINT16: { */
+  /*   clean_result = malloc(5 + 1); */
+  /*   sprintf(clean_result, "%d", entry_data.uint16); */
+  /*   break; */
+  /* } */
   case MMDB_DATA_TYPE_UINT32: {
-    clean_result = malloc(10 + 1);
-    sprintf(clean_result, "%d", entry_data.uint32);
-    break;
+    Store_field(query_r, 0, POLY_INT);
+    int_result = Val_long(entry_data.uint32);
+    goto int_finish;
   }
-  case MMDB_DATA_TYPE_UINT64: {
-    clean_result = malloc(20 + 1);
-    sprintf(clean_result, "%llu", entry_data.uint64);
-    break;
-  }
+  /* case MMDB_DATA_TYPE_UINT64: { */
+  /*   clean_result = malloc(20 + 1); */
+  /*   sprintf(clean_result, "%llu", entry_data.uint64); */
+  /*   break; */
+  /* } */
     // look at /usr/bin/sed -n 1380,1430p src/maxminddb.c
   case MMDB_DATA_TYPE_ARRAY:
   case MMDB_DATA_TYPE_MAP:
-    free(query);
     caml_failwith("Can't return a Map or Array yet");
   }
 
+ string_finish:
   caml_clean_result = caml_copy_string(clean_result);
-  free(query);
   free(clean_result);
-  CAMLreturn(caml_clean_result);
+  Store_field(query_r, 0, POLY_STRING);
+  Store_field(query_r, 1, caml_clean_result);
+  CAMLreturn(query_r);
+
+ int_finish:
+  Store_field(query_r, 1, int_result);
+  CAMLreturn(query_r);
 }
