@@ -2,9 +2,8 @@ Maxminddb is an OCaml binding to [libmaxminddb](https://github.com/maxmind/libma
 the successor of [GeoIP Legacy (Previously known as
 GeoIP)](http://dev.maxmind.com/geoip/).
 
-Lookups return strings that can be converted into other values
-appropriately, ie if you are creating a path that yields an integer,
-then you'll get a string of a valid integer and similarly for floats.
+Lookups return polymorphic variants wrapping values like `bool`,
+`float`, `string` and `int`.
 
 # Code Examples
 
@@ -69,11 +68,12 @@ well.
 (* This file is named dump_using_array.ml *)
 #require "maxminddb"
 
-let () = 
-  let an_ip = "69.12.169.82" in 
-  Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb -> 
-    Maxminddb.lookup_path san_fran ["subdivisions";"0";"geoname_id"] this_mmdb
-    |> print_endline
+let () =
+  let san_fran = "69.12.169.82" in
+  Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb ->
+    match Maxminddb.lookup_path san_fran ["subdivisions";"0";"geoname_id"] this_mmdb with
+    | `Int i -> string_of_int i |> print_endline
+    | _ -> assert false
   end
 ```
 

@@ -1,7 +1,7 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
 Name:         maxminddb
-Version:      0.2
+Version:      0.3
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
 Synopsis:     Bindings to libmaxminddb, like geoip2

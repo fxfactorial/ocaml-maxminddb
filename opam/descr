@@ -1,4 +1,4 @@
-Bindings to Maxmind.com's libmaxminddb library.
+Bindings to Maxmind.com's libmaxminddb library, like geoip2
 
 Maxminddb provides OCaml bindings to MaxMind's libmaxminddb C
 library, libmaxminddb is the database powering GeoIP2.  GeoIP2
