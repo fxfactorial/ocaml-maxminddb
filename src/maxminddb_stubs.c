@@ -1,33 +1,24 @@
+// C Standard stuff
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
-
+// OCaml declarations
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
+// libmaxminddb
+#include <maxminddb.h>
 
-#define Val_none Val_int(0)
-
+// Avoid having to do the hash computation
 #define POLY_STRING (-1953941021)
 #define POLY_INT 7309727
 #define POLY_FLOAT 730360569
 #define POLY_BOOL 1474912405
-
-static value Val_some(value v)
-{
-  CAMLparam1(v);
-  CAMLlocal1(some);
-
-  some = caml_alloc(1, 0);
-  Store_field(some, 0, v);
-  CAMLreturn(some);
-}
-
-#include <maxminddb.h>
 
 static char* pull_all_data(FILE *f)
 {
@@ -188,49 +179,39 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   free(query);
   query_r = caml_alloc(2, 0);
 
-
   switch (entry_data.type) {
   case MMDB_DATA_TYPE_BYTES: {
     clean_result = malloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.bytes, entry_data.data_size);
     goto string_finish;
-
   }
   case MMDB_DATA_TYPE_UTF8_STRING: {
     clean_result = malloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.utf8_string, entry_data.data_size);
     goto string_finish;
   }
-  /* case MMDB_DATA_TYPE_FLOAT: { */
-  /*   clean_result = malloc(48); */
-  /*   sprintf(clean_result, "%f", entry_data.float_value); */
-  /*   break; */
-  /* } */
-  /* case MMDB_DATA_TYPE_BOOLEAN: { */
-  /*   clean_result = malloc((entry_data.boolean ? 4 : 5) + 1); */
-  /*   sprintf(clean_result, "%s", entry_data.boolean ? "true" : "false"); */
-  /*   break; */
-  /* } */
-  /* case MMDB_DATA_TYPE_DOUBLE: { */
-  /*   clean_result = malloc(48); */
-  /*   sprintf(clean_result, "%f", entry_data.double_value); */
-  /*   break; */
-  /* } */
-  /* case MMDB_DATA_TYPE_UINT16: { */
-  /*   clean_result = malloc(5 + 1); */
-  /*   sprintf(clean_result, "%d", entry_data.uint16); */
-  /*   break; */
-  /* } */
-  case MMDB_DATA_TYPE_UINT32: {
+  case MMDB_DATA_TYPE_FLOAT: {
+    Store_field(query_r, 0, POLY_FLOAT);
+    Store_field(query_r, 1, caml_copy_double(entry_data.float_value));
+    goto finish;
+  }
+  case MMDB_DATA_TYPE_BOOLEAN: {
+    Store_field(query_r, 0, POLY_BOOL);
+    Store_field(query_r, 1, Val_true ? entry_data.boolean : Val_false);
+    goto finish;
+  }
+  case MMDB_DATA_TYPE_DOUBLE: {
+    Store_field(query_r, 0, POLY_FLOAT);
+    Store_field(query_r, 1, caml_copy_double(entry_data.double_value));
+    goto finish;
+  }
+  case MMDB_DATA_TYPE_UINT16:
+  case MMDB_DATA_TYPE_UINT32:
+  case MMDB_DATA_TYPE_UINT64: {
     Store_field(query_r, 0, POLY_INT);
     int_result = Val_long(entry_data.uint32);
     goto int_finish;
   }
-  /* case MMDB_DATA_TYPE_UINT64: { */
-  /*   clean_result = malloc(20 + 1); */
-  /*   sprintf(clean_result, "%llu", entry_data.uint64); */
-  /*   break; */
-  /* } */
     // look at /usr/bin/sed -n 1380,1430p src/maxminddb.c
   case MMDB_DATA_TYPE_ARRAY:
   case MMDB_DATA_TYPE_MAP:
@@ -246,5 +227,8 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 
  int_finish:
   Store_field(query_r, 1, int_result);
+  CAMLreturn(query_r);
+
+ finish:
   CAMLreturn(query_r);
 }
