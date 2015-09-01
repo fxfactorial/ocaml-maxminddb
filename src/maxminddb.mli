@@ -35,4 +35,4 @@ val lookup_path : ip:string -> query:string list -> mmdb -> query_r
 val postal_code : ip:string -> mmdb -> string
 
 (** Convenience function that opens and closes a mmdb for you *)
-val with_mmdb : path:string -> (mmdb -> 'a) -> unit
+val with_mmdb : path:string -> (mmdb -> unit) -> unit

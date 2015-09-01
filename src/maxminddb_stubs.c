@@ -28,7 +28,7 @@ static char* pull_all_data(FILE *f)
   size = ftell(f);
   rewind(f);
   fflush(f);
-  char *buffer = malloc(size);
+  char *buffer = caml_stat_alloc(size);
   fread(buffer, size, 1, f);
   fflush(f);
   return buffer;
@@ -62,6 +62,9 @@ char *data_from_dump(MMDB_entry_data_list_s *entry_data_list)
   char temp_name[] = "/tmp/ocaml-maxminddb-XXXXXX";
   mkstemp(temp_name);
   FILE *f = fopen(temp_name, "r+wb");
+  if (!f) {
+    caml_failwith("Couldn't open tempfile needed for dumping database");
+  }
   MMDB_dump_entry_data_list(f, entry_data_list, 2);
   fflush(f);
   char *pulled_from_db = pull_all_data(f);
@@ -181,12 +184,12 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 
   switch (entry_data.type) {
   case MMDB_DATA_TYPE_BYTES: {
-    clean_result = malloc(entry_data.data_size + 1);
+    clean_result = caml_stat_alloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.bytes, entry_data.data_size);
     goto string_finish;
   }
   case MMDB_DATA_TYPE_UTF8_STRING: {
-    clean_result = malloc(entry_data.data_size + 1);
+    clean_result = caml_stat_alloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.utf8_string, entry_data.data_size);
     goto string_finish;
   }

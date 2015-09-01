@@ -39,5 +39,5 @@ let postal_code ~ip mmdb =
 
 let with_mmdb ~path f =
   let this_mmdb = create path in
-  f this_mmdb |> ignore;
+  let () = f this_mmdb in
   close this_mmdb
