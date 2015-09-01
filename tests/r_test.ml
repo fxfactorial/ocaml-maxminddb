@@ -16,3 +16,10 @@ let () =
     ]
     |> List.iter print_endline
   end
+
+(* let () = *)
+(*   let h = Maxminddb.create city in *)
+(*   Maxminddb.postal_code san_fran h |> print_endline; *)
+(*   Maxminddb.close h; *)
+(* Need to fix this case *)
+(*   Maxminddb.close h *)

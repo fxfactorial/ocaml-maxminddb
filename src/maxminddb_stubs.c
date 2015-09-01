@@ -73,14 +73,9 @@ char *data_from_dump(MMDB_entry_data_list_s *entry_data_list)
   return pulled_from_db;
 }
 
-CAMLprim value mmdb_ml_version(value v_unit)
+CAMLprim value mmdb_ml_version(void)
 {
-  CAMLparam1(v_unit);
-  CAMLlocal1(ml_v_string);
-
-  const char *v = MMDB_lib_version();
-  ml_v_string = caml_copy_string(v);
-  CAMLreturn(ml_v_string);
+  return caml_copy_string(MMDB_lib_version());
 }
 
 CAMLprim value mmdb_ml_open(value s)
@@ -88,10 +83,15 @@ CAMLprim value mmdb_ml_open(value s)
   CAMLparam1(s);
   CAMLlocal1(raw);
 
-  char *as_string = String_val(s);
+  int len = strlen(String_val(s));
+  char copied[len + 1];
+  int copied_amount = strlcpy(copied, String_val(s), len + 1);
+  if (copied_amount != len) {
+    caml_failwith("Could not open MMDB database");
+  }
   raw = caml_alloc(sizeof(MMDB_s), Abstract_tag);
   MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(raw);
-  int status = MMDB_open(as_string, MMDB_MODE_MMAP, as_mmdb);
+  int status = MMDB_open(copied, MMDB_MODE_MMAP, as_mmdb);
   check_status(status);
   CAMLreturn(raw);
 }
@@ -126,7 +126,13 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
   CAMLparam2(ip, mmdb);
   CAMLlocal2(raw, pulled_string);
 
-  char *as_string = String_val(ip);
+  int len = strlen(String_val(ip));
+  char as_string[len + 1];
+  int copied_amount = strlcpy(as_string, String_val(ip), len + 1);
+  if (copied_amount != len) {
+    caml_failwith("Could not copy IP address properly");
+  }
+
   MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
   int gai_error = 0, mmdb_error = 0;
   raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
@@ -151,12 +157,19 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   long int int_result;
 
   iter_count = query_list;
-  char *ip_as_str = String_val(ip);
-  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
 
+  int len = strlen(String_val(ip));
+  char as_string[len + 1];
+  int copied_amount = strlcpy(as_string, String_val(ip), len + 1);
+
+  if (copied_amount != len) {
+    caml_failwith("Could not copy IP address properly");
+  }
+
+  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
   raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
   MMDB_lookup_result_s *result = (MMDB_lookup_result_s*)Data_custom_val(raw);
-  *result = MMDB_lookup_string(as_mmdb, ip_as_str, &gai_error, &mmdb_error);
+  *result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
   check_error(gai_error, mmdb_error);
 
   while (iter_count != Val_emptylist) {
