@@ -1,13 +1,14 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
 Name:         maxminddb
-Version:      0.3
+Version:      0.4
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
 Synopsis:     Bindings to libmaxminddb, like geoip2
 Authors:      Edgar Aroutiounian <edgar.factorial@gmail.com>
 License:      BSD-3-clause
 Plugins:      META (0.4), DevFiles (0.4)
+BuildTools:ocamlbuild, ocamldoc
 Description:
   Bindings to Maxmind.com's libmaxminddb library, like geoip2
 
@@ -24,8 +25,6 @@ AlphaFeatures: ocamlbuild_more_args
 
 Library maxminddb
   Path:src
-  BuildTools:ocamlbuild
-  # BuildDepends:podge
   install: true
   CClib: -lmaxminddb
   CCOpt: -g -Wextra -Wall -std=c99
@@ -37,7 +36,6 @@ Document api
   Title: API reference for maxminddb
   Type: ocamlbuild (0.4)
   Authors: Edgar Aroutiounian
-  BuildTools: ocamldoc, ocamlbuild
   Format: HTML
   Index: index.html
   XOCamlbuildPath: .
