@@ -86,9 +86,9 @@ CAMLprim value mmdb_ml_open(value s)
   CAMLparam1(s);
   CAMLlocal1(record);
 
-  if (polymorphic_variants.poly_bool == 0 ||
+  if (polymorphic_variants.poly_bool == 0  ||
       polymorphic_variants.poly_float == 0 ||
-      polymorphic_variants.poly_int == 0 ||
+      polymorphic_variants.poly_int == 0   ||
       polymorphic_variants.poly_string == 0) {
     polymorphic_variants.poly_bool = caml_hash_variant("Bool");
     polymorphic_variants.poly_float = caml_hash_variant("Float");
@@ -96,12 +96,12 @@ CAMLprim value mmdb_ml_open(value s)
     polymorphic_variants.poly_string = caml_hash_variant("String");
   }
 
-  int len = strlen(String_val(s));
-  char copied[len + 1];
-  int copied_amount = strlcpy(copied, String_val(s), len + 1);
-  if (copied_amount != len) {
+  unsigned int len = caml_string_length(s);
+  char *copied = caml_strdup(String_val(s));
+  if (strlen(copied) != (size_t)len) {
     caml_failwith("Could not open MMDB database");
   }
+
   record = caml_alloc(2, 0);
   MMDB_s *this_db = caml_stat_alloc(sizeof(*this_db));
   int status = MMDB_open(copied, MMDB_MODE_MMAP, this_db);
@@ -149,10 +149,10 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
   CAMLparam2(ip, mmdb);
   CAMLlocal2(raw, pulled_string);
 
-  int len = strlen(String_val(ip));
-  char as_string[len + 1];
-  int copied_amount = strlcpy(as_string, String_val(ip), len + 1);
-  if (copied_amount != len) {
+  unsigned int len = caml_string_length(ip);
+  char *as_string = caml_strdup(String_val(ip));
+
+  if (strlen(as_string) != (size_t)len) {
     caml_failwith("Could not copy IP address properly");
   }
 
@@ -181,11 +181,9 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 
   iter_count = query_list;
 
-  int len = strlen(String_val(ip));
-  char as_string[len + 1];
-  int copied_amount = strlcpy(as_string, String_val(ip), len + 1);
-
-  if (copied_amount != len) {
+  unsigned int len = caml_string_length(ip);
+  char *as_string = caml_strdup(String_val(ip));
+  if (strlen(as_string) != (size_t)len) {
     caml_failwith("Could not copy IP address properly");
   }
 
