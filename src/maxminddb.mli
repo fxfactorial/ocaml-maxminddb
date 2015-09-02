@@ -6,6 +6,18 @@
     in memory *)
 type mmdb
 
+(** Languages that Maxmindb DB knows for paths ending in string
+    queries, note that not all queries support all languages *)
+type languages =
+  | German
+  | English
+  | Spanish
+  | French
+  | Japanese
+  | Brazilian
+  | Russian
+  | Chinese
+
 type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
 
 (** Get version string of Maxminddb *)
@@ -33,6 +45,9 @@ val lookup_path : ip:string -> query:string list -> mmdb -> query_r
 
 (** Short cut function for getting postal code from ip address *)
 val postal_code : ip:string -> mmdb -> string
+
+(** Short cut function for getting a city name from ip address *)
+val city_name : ?lang:languages -> ip:string -> mmdb -> string
 
 (** Convenience function that opens and closes a mmdb for you *)
 val with_mmdb : path:string -> (mmdb -> unit) -> unit

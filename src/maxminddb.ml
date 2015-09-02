@@ -3,6 +3,26 @@ type unsafe_mmdb_handle
 type mmdb = { mutable initialized : bool;
               handle : unsafe_mmdb_handle; }
 
+type languages =
+  | German
+  | English
+  | Spanish
+  | French
+  | Japanese
+  | Brazilian
+  | Russian
+  | Chinese
+
+let string_of_language = function
+  | German -> "de"
+  | English -> "en"
+  | Spanish -> "es"
+  | French -> "fr"
+  | Japanese -> "ja"
+  | Brazilian -> "pt-BR"
+  | Russian -> "ru"
+  | Chinese -> "zh-CN"
+
 type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
 
 external version : unit -> string = "mmdb_ml_version"
@@ -35,10 +55,14 @@ let lookup_path ~ip ~query mmdb =
   | _ -> lookup_path_raw ~ip ~query mmdb
 
 let postal_code ~ip mmdb =
-  match lookup_path ip ["postal";"code"] mmdb with
+  match lookup_path ip ["postal"; "code"] mmdb with
   | `String s -> s
-  | x ->
-    assert false
+  | _ -> assert false
+
+let city_name ?(lang=English) ~ip mmdb =
+  match lookup_path ip ["city"; "names"; string_of_language lang] mmdb with
+  | `String s -> s
+  | _ -> assert false
 
 let with_mmdb ~path f =
   let this_mmdb = create path in
