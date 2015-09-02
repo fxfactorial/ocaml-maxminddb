@@ -13,5 +13,9 @@ let () =
      Maxminddb.dump ~ip:san_fran this_mmdb;
      Maxminddb.city_name ~lang:Maxminddb.Japanese ~ip:san_fran this_mmdb
     ]
-    |> List.iter print_endline
+    |> List.iter print_endline;
+    let loc = Maxminddb.location san_fran this_mmdb in
+    let open Maxminddb in
+    Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
+    |> print_endline
   end

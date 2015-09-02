@@ -3,6 +3,11 @@ type unsafe_mmdb_handle
 type mmdb = { mutable initialized : bool;
               handle : unsafe_mmdb_handle; }
 
+type location = { latitude : float;
+                  longitude: float;
+                  metro_code : int;
+                  time_zone : string; }
+
 type languages =
   | German
   | English
@@ -63,6 +68,16 @@ let city_name ?(lang=English) ~ip mmdb =
   match lookup_path ip ["city"; "names"; string_of_language lang] mmdb with
   | `String s -> s
   | _ -> assert false
+
+let location ~ip mmdb =
+  {latitude = (match lookup_path ip ["location"; "latitude"] mmdb with
+       | `Float f -> f | _ -> assert false);
+   longitude = (match lookup_path ip ["location"; "longitude"] mmdb with
+       | `Float f -> f | _ -> assert false);
+   metro_code = (match lookup_path ip ["location"; "metro_code"] mmdb with
+       | `Int i -> i | _ -> assert false);
+   time_zone = (match lookup_path ip ["location"; "time_zone"] mmdb with
+       | `String s -> s | _ -> assert false)}
 
 let with_mmdb ~path f =
   let this_mmdb = create path in

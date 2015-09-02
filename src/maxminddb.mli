@@ -6,6 +6,12 @@
     in memory *)
 type mmdb
 
+(** Type presenting physical location data *)
+type location = { latitude : float;
+                  longitude: float;
+                  metro_code : int;
+                  time_zone : string; }
+
 (** Languages that Maxmindb DB knows for paths ending in string
     queries, note that not all queries support all languages *)
 type languages =
@@ -50,6 +56,10 @@ val postal_code : ip:string -> mmdb -> string
 
 (** Short cut function for getting a city name from ip address *)
 val city_name : ?lang:languages -> ip:string -> mmdb -> string
+
+(** Short cut function for getting a record of physical location
+    information *)
+val location : ip:string -> mmdb -> location
 
 (** Convenience function that opens and closes a mmdb for you *)
 val with_mmdb : path:string -> (mmdb -> unit) -> unit
