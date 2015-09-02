@@ -46,5 +46,8 @@ version := $(shell oasis query version)
 name := $(shell oasis query name)
 
 debug:uninstall build install
-	@echo "Rebuild, reinstalled\n"
-	@utop tests/r_test.ml
+	echo "Rebuild, reinstalled\n"
+	ulimit -c unlimited
+	ocamlfind ocamlopt -package maxminddb -g -linkpkg tests/r_test.ml -o Test
+	find tests -not -name "r_test.ml" -delete
+	./Test

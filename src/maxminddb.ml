@@ -1,4 +1,7 @@
-type mmdb
+type unsafe_mmdb_handle
+
+type mmdb = { mutable initialized : bool;
+              handle : unsafe_mmdb_handle; }
 
 type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
 

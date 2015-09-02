@@ -84,7 +84,8 @@ CAMLprim value mmdb_ml_version(void)
 CAMLprim value mmdb_ml_open(value s)
 {
   CAMLparam1(s);
-  CAMLlocal1(raw);
+  CAMLlocal1(record);
+
   if (polymorphic_variants.poly_bool == 0 ||
       polymorphic_variants.poly_float == 0 ||
       polymorphic_variants.poly_int == 0 ||
@@ -101,19 +102,29 @@ CAMLprim value mmdb_ml_open(value s)
   if (copied_amount != len) {
     caml_failwith("Could not open MMDB database");
   }
-  raw = caml_alloc(sizeof(MMDB_s), Abstract_tag);
-  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(raw);
-  int status = MMDB_open(copied, MMDB_MODE_MMAP, as_mmdb);
+  record = caml_alloc(2, 0);
+  MMDB_s *this_db = caml_stat_alloc(sizeof(*this_db));
+  int status = MMDB_open(copied, MMDB_MODE_MMAP, this_db);
   check_status(status);
-  CAMLreturn(raw);
+  Store_field(record, 0, 1);
+  Store_field(record, 1, (value)this_db);
+  CAMLreturn(record);
 }
 
-CAMLprim value mmdb_ml_close(value mmdb)
+CAMLprim value mmdb_ml_close(value record)
 {
-  CAMLparam1(mmdb);
+  CAMLparam1(record);
+  CAMLlocal2(init_value, db_handle);
 
-  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
-  MMDB_close(as_mmdb);
+  init_value = Field(record, 0);
+
+  if (Val_bool(init_value) == Val_false) {
+    caml_failwith("Can't close an already closed DB handle");
+  }
+
+  MMDB_s *this_db = (MMDB_s*)Field(record, 1);
+  MMDB_close(this_db);
+  Store_field(record, 0, 0);
   CAMLreturn(Val_unit);
 }
 
