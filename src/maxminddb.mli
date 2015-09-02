@@ -18,6 +18,8 @@ type languages =
   | Russian
   | Chinese
 
+(** Result of a query, mostly relevant if you are doing it by hand
+    with calls to lookup_path *)
 type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
 
 (** Get version string of Maxminddb *)
