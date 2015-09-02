@@ -6,11 +6,18 @@
     in memory *)
 type mmdb
 
-(** Type presenting physical location data *)
+(** Type representing physical location data *)
 type location = { latitude : float;
                   longitude: float;
                   metro_code : int;
                   time_zone : string; }
+
+(** Type representing political borders of an IP address *)
+type borders = { postal_code : string;
+                 city_name : string;
+                 country_name : string;
+                 continent_name : string;
+                 iso_code : string; }
 
 (** Languages that Maxmindb DB knows for paths ending in string
     queries, note that not all queries support all languages *)
@@ -35,8 +42,8 @@ val version : unit -> string
     file. Maxminddb comes with City, Country databases in etc *)
 val create : path:string -> mmdb
 
-(** Close a handle on a mmdb descriptor, bad things will happen if you
-    try to use the handle after you called closed on it. *)
+(** Close a handle on a mmdb descriptor, raises exception if you try
+    to use the handle after you called closed on it. *)
 val close : mmdb -> unit
 
 (** Dumps the database as a string; if ip is provided then dumps the
@@ -57,9 +64,21 @@ val postal_code : ip:string -> mmdb -> string
 (** Short cut function for getting a city name from ip address *)
 val city_name : ?lang:languages -> ip:string -> mmdb -> string
 
+(** Short cut function for getting a country name from ip address *)
+val country_name : ?lang:languages -> ip:string -> mmdb -> string
+
+(** Short cut function for getting a continent name from ip address *)
+val continent_name : ?lang:languages -> ip:string -> mmdb -> string
+
 (** Short cut function for getting a record of physical location
     information *)
 val location : ip:string -> mmdb -> location
+
+(** ISO code for Country of IP address *)
+val iso_code : ip:string -> mmdb -> string
+
+(** Shortcut providing top level geographical information  *)
+val borders_dump : ?lang:languages -> ip:string -> mmdb -> borders
 
 (** Convenience function that opens and closes a mmdb for you *)
 val with_mmdb : path:string -> (mmdb -> unit) -> unit

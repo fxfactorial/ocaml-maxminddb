@@ -5,7 +5,8 @@ let (via_phone, san_fran) = "172.56.31.240", "69.12.169.82"
 let () =
   Maxminddb.with_mmdb city begin fun this_mmdb ->
     [Maxminddb.version ();
-     (match Maxminddb.lookup_path san_fran ["subdivisions";"0";"geoname_id"] this_mmdb with
+     (match Maxminddb.lookup_path san_fran
+              ["subdivisions"; "0"; "geoname_id"] this_mmdb with
       | `Int i -> string_of_int i
       | _ -> assert false);
      Maxminddb.postal_code san_fran this_mmdb;
@@ -17,5 +18,13 @@ let () =
     let loc = Maxminddb.location san_fran this_mmdb in
     let open Maxminddb in
     Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
-    |> print_endline
+    |> print_endline;
+    Maxminddb.country_name ~lang:Maxminddb.Russian ~ip:san_fran this_mmdb
+    |> print_endline;
+    Maxminddb.continent_name ~lang:Maxminddb.German ~ip:san_fran this_mmdb
+    |> print_endline;
+    Maxminddb.iso_code ~ip:san_fran this_mmdb
+    |> print_endline;
+    let all_together_now = Maxminddb.borders_dump san_fran this_mmdb in
+    print_endline all_together_now.country_name
   end
