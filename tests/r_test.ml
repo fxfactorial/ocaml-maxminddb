@@ -1,5 +1,3 @@
-#require "maxminddb"
-
 let (city, country) = "etc/GeoLite2-City.mmdb", "etc/GeoLite2-Country.mmdb"
 
 let (via_phone, san_fran) = "172.56.31.240", "69.12.169.82"
