@@ -131,11 +131,11 @@ CAMLprim value mmdb_ml_close(value record)
 CAMLprim value mmdb_ml_dump_global(value mmdb)
 {
   CAMLparam1(mmdb);
-  CAMLlocal2(raw, pulled_string);
+  CAMLlocal2(this_db, pulled_string);
 
-  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
+  this_db = Field(mmdb, 1);
+  MMDB_s *as_mmdb = (MMDB_s*)this_db;
   MMDB_entry_data_list_s *entry_data_list = NULL;
-
   int status = MMDB_get_metadata_as_entry_data_list(as_mmdb, &entry_data_list);
   check_status(status);
   char *pulled_from_db = data_from_dump(entry_data_list);
