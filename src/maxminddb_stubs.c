@@ -147,7 +147,7 @@ CAMLprim value mmdb_ml_dump_global(value mmdb)
 CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 {
   CAMLparam2(ip, mmdb);
-  CAMLlocal2(raw, pulled_string);
+  CAMLlocal3(raw, pulled_string, db);
 
   unsigned int len = caml_string_length(ip);
   char *as_string = caml_strdup(String_val(ip));
@@ -156,16 +156,18 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
     caml_failwith("Could not copy IP address properly");
   }
 
-  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
+  db = Field(mmdb, 1);
+  MMDB_s *as_mmdb = (MMDB_s*)db;
   int gai_error = 0, mmdb_error = 0;
-  raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
-  MMDB_lookup_result_s *result = (MMDB_lookup_result_s*)Data_custom_val(raw);
+
+  MMDB_lookup_result_s *result = caml_stat_alloc(sizeof(*result));
   *result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
   MMDB_entry_data_list_s *entry_data_list = NULL;
   int status = MMDB_get_entry_data_list(&result->entry, &entry_data_list);
   check_status(status);
   char *pulled_from_db = data_from_dump(entry_data_list);
   pulled_string = caml_copy_string(pulled_from_db);
+  free(result);
   free(pulled_from_db);
   CAMLreturn(pulled_string);
 }
