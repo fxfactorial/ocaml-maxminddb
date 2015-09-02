@@ -14,11 +14,14 @@
 // libmaxminddb
 #include <maxminddb.h>
 
-// Avoid having to do the hash computation
-#define POLY_STRING (-1953941021)
-#define POLY_INT 7309727
-#define POLY_FLOAT 730360569
-#define POLY_BOOL 1474912405
+// Because who knows what the hash will be across platforms, compiler
+// versions, whatever.
+static struct {
+  long poly_string;
+  long poly_int;
+  long poly_float;
+  long poly_bool;
+} polymorphic_variants = {0, 0, 0, 0};
 
 static char* pull_all_data(FILE *f)
 {
@@ -82,6 +85,15 @@ CAMLprim value mmdb_ml_open(value s)
 {
   CAMLparam1(s);
   CAMLlocal1(raw);
+  if (polymorphic_variants.poly_bool == 0 ||
+      polymorphic_variants.poly_float == 0 ||
+      polymorphic_variants.poly_int == 0 ||
+      polymorphic_variants.poly_string == 0) {
+    polymorphic_variants.poly_bool = caml_hash_variant("Bool");
+    polymorphic_variants.poly_float = caml_hash_variant("Float");
+    polymorphic_variants.poly_int = caml_hash_variant("Int");
+    polymorphic_variants.poly_string = caml_hash_variant("String");
+  }
 
   int len = strlen(String_val(s));
   char copied[len + 1];
@@ -207,24 +219,24 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
     goto string_finish;
   }
   case MMDB_DATA_TYPE_FLOAT: {
-    Store_field(query_r, 0, POLY_FLOAT);
+    Store_field(query_r, 0, polymorphic_variants.poly_float);
     Store_field(query_r, 1, caml_copy_double(entry_data.float_value));
     goto finish;
   }
   case MMDB_DATA_TYPE_BOOLEAN: {
-    Store_field(query_r, 0, POLY_BOOL);
+    Store_field(query_r, 0, polymorphic_variants.poly_bool);
     Store_field(query_r, 1, Val_true ? entry_data.boolean : Val_false);
     goto finish;
   }
   case MMDB_DATA_TYPE_DOUBLE: {
-    Store_field(query_r, 0, POLY_FLOAT);
+    Store_field(query_r, 0, polymorphic_variants.poly_float);
     Store_field(query_r, 1, caml_copy_double(entry_data.double_value));
     goto finish;
   }
   case MMDB_DATA_TYPE_UINT16:
   case MMDB_DATA_TYPE_UINT32:
   case MMDB_DATA_TYPE_UINT64: {
-    Store_field(query_r, 0, POLY_INT);
+    Store_field(query_r, 0, polymorphic_variants.poly_int);
     int_result = Val_long(entry_data.uint32);
     goto int_finish;
   }
@@ -237,7 +249,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
  string_finish:
   caml_clean_result = caml_copy_string(clean_result);
   free(clean_result);
-  Store_field(query_r, 0, POLY_STRING);
+  Store_field(query_r, 0, polymorphic_variants.poly_string);
   Store_field(query_r, 1, caml_clean_result);
   CAMLreturn(query_r);
 
