@@ -175,7 +175,7 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 {
   CAMLparam3(ip, query_list, mmdb);
-  CAMLlocal4(iter_count, raw, caml_clean_result, query_r);
+  CAMLlocal5(iter_count, raw, caml_clean_result, query_r, db);
 
   int total_len = 0, copy_count = 0, gai_error = 0, mmdb_error = 0;
   char *clean_result;
@@ -188,12 +188,12 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   if (strlen(as_string) != (size_t)len) {
     caml_failwith("Could not copy IP address properly");
   }
-
-  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
-  raw = caml_alloc(sizeof(MMDB_lookup_result_s), Abstract_tag);
-  MMDB_lookup_result_s *result = (MMDB_lookup_result_s*)Data_custom_val(raw);
+  db = Field(mmdb, 1);
+  MMDB_s *as_mmdb = (MMDB_s*)db;
+  MMDB_lookup_result_s *result = caml_stat_alloc(sizeof(*result));
   *result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
   check_error(gai_error, mmdb_error);
+  free(as_string);
 
   while (iter_count != Val_emptylist) {
     total_len++;
