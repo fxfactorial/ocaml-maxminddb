@@ -115,7 +115,7 @@ CAMLprim value mmdb_ml_open(value s)
 CAMLprim value mmdb_ml_close(value record)
 {
   CAMLparam1(record);
-  CAMLlocal2(init_value, db_handle);
+  CAMLlocal1(init_value);
 
   init_value = Field(record, 0);
 
@@ -149,7 +149,7 @@ CAMLprim value mmdb_ml_dump_global(value mmdb)
 CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 {
   CAMLparam2(ip, mmdb);
-  CAMLlocal3(raw, pulled_string, db);
+  CAMLlocal2(pulled_string, db);
 
   unsigned int len = caml_string_length(ip);
   char *as_string = caml_strdup(String_val(ip));
@@ -178,7 +178,7 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 {
   CAMLparam3(ip, query_list, mmdb);
-  CAMLlocal5(iter_count, raw, caml_clean_result, query_r, db);
+  CAMLlocal4(iter_count, caml_clean_result, query_r, db);
 
   int total_len = 0, copy_count = 0, gai_error = 0, mmdb_error = 0;
   char *clean_result;
