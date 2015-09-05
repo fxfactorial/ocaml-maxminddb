@@ -22,6 +22,17 @@ let () =
     let open Maxminddb in
     Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
     |> print_endline;
+    let geo_borders =
+      borders ~lang:French ~ip:some_ip this_mmdb
+    in
+    Printf.sprintf
+      "%s %s %s %s %s"
+      geo_borders.postal_code
+      geo_borders.city_name
+      geo_borders.country_name
+      geo_borders.continent_name
+      geo_borders.iso_code
+  |> print_endline
   end
 ```
 
@@ -33,7 +44,7 @@ $ utop loc_dump.ml
 90221 Compton États-Unis Amérique du Nord US
 ```
 
-Here's a slightly longer example
+Here's dumping example
 
 ```ocaml
 (* This file is named dump_stats.ml *)
@@ -74,9 +85,9 @@ well.
 #require "maxminddb"
 
 let () =
-  let san_fran = "69.12.169.82" in
+  let some_ip = "69.12.169.82" in
   Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb ->
-    match Maxminddb.lookup_path san_fran ["subdivisions";"0";"geoname_id"] this_mmdb with
+    match Maxminddb.lookup_path some_ip ["subdivisions";"0";"geoname_id"] this_mmdb with
     | `Int i -> string_of_int i |> print_endline
     | _ -> assert false
   end
