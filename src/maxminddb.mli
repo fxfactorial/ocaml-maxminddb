@@ -33,7 +33,10 @@ type languages =
 
 (** Result of a query, mostly relevant if you are doing it by hand
     with calls to lookup_path *)
-type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
+type query_r = [`String of string
+               | `Int of int
+               | `Float of float
+               | `Bool of bool]
 
 (** Get version string of Maxminddb *)
 val version : unit -> string
@@ -74,11 +77,11 @@ val continent_name : ?lang:languages -> ip:string -> mmdb -> string
     information *)
 val location : ip:string -> mmdb -> location
 
-(** ISO code for Country of IP address *)
+(** ISO code for Country of ip address *)
 val iso_code : ip:string -> mmdb -> string
 
 (** Shortcut providing top level geographical information  *)
-val borders_dump : ?lang:languages -> ip:string -> mmdb -> borders
+val borders : ?lang:languages -> ip:string -> mmdb -> borders
 
 (** Convenience function that opens and closes a mmdb for you *)
 val with_mmdb : path:string -> (mmdb -> unit) -> unit

@@ -34,7 +34,10 @@ let string_of_language = function
   | Russian -> "ru"
   | Chinese -> "zh-CN"
 
-type query_r = [`String of string | `Int of int | `Float of float | `Bool of bool]
+type query_r = [`String of string
+               | `Int of int
+               | `Float of float
+               | `Bool of bool]
 
 external version : unit -> string = "mmdb_ml_version"
 
@@ -100,7 +103,7 @@ let location ~ip mmdb =
    time_zone = (match lookup_path ip ["location"; "time_zone"] mmdb with
        | `String s -> s | _ -> assert false)}
 
-let borders_dump ?(lang=English) ~ip mmdb =
+let borders ?(lang=English) ~ip mmdb =
   { postal_code = postal_code ip mmdb;
     city_name = city_name ~lang ~ip mmdb;
     country_name = country_name ~lang ~ip mmdb;
@@ -111,3 +114,4 @@ let with_mmdb ~path f =
   let this_mmdb = create path in
   let () = f this_mmdb in
   close this_mmdb
+

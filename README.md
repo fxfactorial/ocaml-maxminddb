@@ -13,19 +13,24 @@ Here's a short example that uses a convenience function that
 closes the `mmdb` handle for you.
 
 ```ocaml
-(* File named zip_of_ip.ml *)
+(* File named loc_dump.ml *)
 #require "maxminddb"
 let () = 
+  let some_ip = "172.56.31.240" in
   Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb ->
-    Maxminddb.postal_code "172.56.31.240" this_mmdb |> print_endline;
+    let loc = Maxminddb.location some_ip this_mmdb in
+    let open Maxminddb in
+    Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
+    |> print_endline;
   end
 ```
 
 And the corresponding result on the shell
 
 ```ocaml
-$ utop zip_of_ip.ml
-90221
+$ utop loc_dump.ml
+33.895900 -118.220100 803 America/Los_Angeles
+90221 Compton États-Unis Amérique du Nord US
 ```
 
 Here's a slightly longer example
@@ -87,7 +92,3 @@ $ utop dump_using_array.ml
 1.  If your path yields a map or array then the library will throw an
     exception, this is mostly an implementation issue. I haven't
     thought about how I want to do it yet.
-2.  Sometimes there's junk at the end of string for a DB dump. This is
-    because of the awkward C API where the dump function expects a
-    `FILE *` and I don't have access to [fmemopen](http://pubs.opengroup.org/onlinepubs/9699919799/functions/fmemopen.html) since I am
-    primarily developing this library on `OS X`.

@@ -108,6 +108,7 @@ CAMLprim value mmdb_ml_open(value s)
   check_status(status);
   Store_field(record, 0, 1);
   Store_field(record, 1, (value)this_db);
+  free(copied);
   CAMLreturn(record);
 }
 
@@ -124,6 +125,7 @@ CAMLprim value mmdb_ml_close(value record)
 
   MMDB_s *this_db = (MMDB_s*)Field(record, 1);
   MMDB_close(this_db);
+  free(this_db);
   Store_field(record, 0, 0);
   CAMLreturn(Val_unit);
 }
@@ -168,6 +170,7 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
   char *pulled_from_db = data_from_dump(entry_data_list);
   pulled_string = caml_copy_string(pulled_from_db);
   free(result);
+  free(as_string);
   free(pulled_from_db);
   CAMLreturn(pulled_string);
 }
@@ -203,7 +206,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   char **query = caml_stat_alloc(sizeof(char *) * (total_len + 1));
 
   while (query_list != Val_emptylist) {
-    query[copy_count] = String_val(Field(query_list, 0));
+    query[copy_count] = caml_strdup(String_val(Field(query_list, 0)));
     copy_count++;
     query_list = Field(query_list, 1);
   }
@@ -215,42 +218,51 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 			       (const char *const *const)query);
   check_status(status);
   check_data(entry_data);
+  free(result);
+  for (int i = 0; i < copy_count; free(query[i]), i++);
   free(query);
   query_r = caml_alloc(2, 0);
 
   switch (entry_data.type) {
-  case MMDB_DATA_TYPE_BYTES: {
+  case MMDB_DATA_TYPE_BYTES:
     clean_result = caml_stat_alloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.bytes, entry_data.data_size);
     goto string_finish;
-  }
-  case MMDB_DATA_TYPE_UTF8_STRING: {
-    clean_result = caml_stat_alloc(entry_data.data_size + 1);
-    memcpy(clean_result, entry_data.utf8_string, entry_data.data_size);
+
+  case MMDB_DATA_TYPE_UTF8_STRING:
+    clean_result = strndup(entry_data.utf8_string, entry_data.data_size);
     goto string_finish;
-  }
-  case MMDB_DATA_TYPE_FLOAT: {
+
+  case MMDB_DATA_TYPE_FLOAT:
     Store_field(query_r, 0, polymorphic_variants.poly_float);
     Store_field(query_r, 1, caml_copy_double(entry_data.float_value));
     goto finish;
-  }
-  case MMDB_DATA_TYPE_BOOLEAN: {
+
+  case MMDB_DATA_TYPE_BOOLEAN:
     Store_field(query_r, 0, polymorphic_variants.poly_bool);
     Store_field(query_r, 1, Val_true ? entry_data.boolean : Val_false);
     goto finish;
-  }
-  case MMDB_DATA_TYPE_DOUBLE: {
+
+  case MMDB_DATA_TYPE_DOUBLE:
     Store_field(query_r, 0, polymorphic_variants.poly_float);
     Store_field(query_r, 1, caml_copy_double(entry_data.double_value));
     goto finish;
-  }
+
   case MMDB_DATA_TYPE_UINT16:
+    Store_field(query_r, 0, polymorphic_variants.poly_int);
+    int_result = Val_long(entry_data.uint16);
+    goto int_finish;
+
   case MMDB_DATA_TYPE_UINT32:
-  case MMDB_DATA_TYPE_UINT64: {
     Store_field(query_r, 0, polymorphic_variants.poly_int);
     int_result = Val_long(entry_data.uint32);
     goto int_finish;
-  }
+
+  case MMDB_DATA_TYPE_UINT64:
+    Store_field(query_r, 0, polymorphic_variants.poly_int);
+    int_result = Val_long(entry_data.uint32);
+    goto int_finish;
+
     // look at /usr/bin/sed -n 1380,1430p src/maxminddb.c
   case MMDB_DATA_TYPE_ARRAY:
   case MMDB_DATA_TYPE_MAP:
