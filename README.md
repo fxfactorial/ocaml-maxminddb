@@ -17,7 +17,7 @@ closes the `mmdb` handle for you.
 #require "maxminddb"
 let () = 
   let some_ip = "172.56.31.240" in
-  Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb ->
+  let this_mmdb = Maxminddb.create "etc/GeoLite2-City.mmdb" in
     let loc = Maxminddb.location some_ip this_mmdb in
     let open Maxminddb in
     Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
@@ -31,7 +31,6 @@ let () =
       geo_borders.continent_name
       geo_borders.iso_code
   |> print_endline
-  end
 ```
 
 And the corresponding result on the shell
@@ -50,8 +49,7 @@ Here's dumping example
 
 let () =
   Maxminddb.create "etc/GeoLite2-City.mmdb"
-  |> Maxminddb.dump Sys.argv.(1) |> print_endline;
-  Maxminddb.close t
+  |> Maxminddb.dump Sys.argv.(1) |> print_endline
 ```
 
 And at the shell
@@ -84,11 +82,10 @@ well.
 
 let () =
   let some_ip = "69.12.169.82" in
-  Maxminddb.with_mmdb "etc/GeoLite2-City.mmdb" begin fun this_mmdb ->
+  let this_mmdb = Maxminddb.create_mmdb "etc/GeoLite2-City.mmdb" in 
     match Maxminddb.lookup_path some_ip ["subdivisions";"0";"geoname_id"] this_mmdb with
     | `Int i -> string_of_int i |> print_endline
     | _ -> assert false
-  end
 ```
 
 ```shell

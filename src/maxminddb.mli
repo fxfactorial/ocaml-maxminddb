@@ -47,7 +47,7 @@ val create : path:string -> mmdb
 
 (** Close a handle on a mmdb descriptor, raises exception if you try
     to use the handle after you called closed on it. *)
-val close : mmdb -> unit
+(* val close : mmdb -> unit *)
 
 (** Dumps the database as a string; if ip is provided then dumps the
     database for this particular ip address, if no ip provided then
@@ -84,4 +84,4 @@ val iso_code : ip:string -> mmdb -> string
 val borders : ?lang:languages -> ip:string -> mmdb -> borders
 
 (** Convenience function that opens and closes a mmdb for you *)
-val with_mmdb : path:string -> (mmdb -> unit) -> unit
+(* val with_mmdb : path:string -> (mmdb -> unit) -> unit *)

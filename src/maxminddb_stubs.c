@@ -11,6 +11,7 @@
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
+#include <caml/custom.h>
 // libmaxminddb
 #include <maxminddb.h>
 
@@ -22,6 +23,20 @@ static struct {
   long poly_float;
   long poly_bool;
 } polymorphic_variants = {0, 0, 0, 0};
+
+void clean_up_mmdb_memory(value this_mmdb)
+{
+  MMDB_close((MMDB_s*)Data_custom_val(this_mmdb));
+}
+
+static struct custom_operations mmdb_custom_ops = {
+ .identifier = "mmdb_ml_handler",
+ .finalize = clean_up_mmdb_memory,
+ .compare = NULL,
+ .hash = NULL,
+ .serialize = NULL,
+ .deserialize = NULL
+};
 
 static char* pull_all_data(FILE *f)
 {
@@ -84,7 +99,7 @@ CAMLprim value mmdb_ml_version(void)
 CAMLprim value mmdb_ml_open(value s)
 {
   CAMLparam1(s);
-  CAMLlocal1(record);
+  CAMLlocal1(mmdb_handle);
 
   if (polymorphic_variants.poly_bool == 0  ||
       polymorphic_variants.poly_float == 0 ||
@@ -102,54 +117,35 @@ CAMLprim value mmdb_ml_open(value s)
     caml_failwith("Could not open MMDB database");
   }
 
-  record = caml_alloc(2, 0);
   MMDB_s *this_db = caml_stat_alloc(sizeof(*this_db));
   int status = MMDB_open(copied, MMDB_MODE_MMAP, this_db);
+  mmdb_handle = caml_alloc_custom(&mmdb_custom_ops, sizeof(*this_db), 0, 1);
   check_status(status);
-  Store_field(record, 0, 1);
-  Store_field(record, 1, (value)this_db);
+  memcpy(Data_custom_val(mmdb_handle), this_db, sizeof(*this_db));
   free(copied);
-  CAMLreturn(record);
-}
-
-CAMLprim value mmdb_ml_close(value record)
-{
-  CAMLparam1(record);
-  CAMLlocal1(init_value);
-
-  init_value = Field(record, 0);
-
-  if (Val_bool(init_value) == Val_false) {
-    caml_failwith("Can't close an already closed DB handle");
-  }
-
-  MMDB_s *this_db = (MMDB_s*)Field(record, 1);
-  MMDB_close(this_db);
-  free(this_db);
-  Store_field(record, 0, 0);
-  CAMLreturn(Val_unit);
+  CAMLreturn(mmdb_handle);
 }
 
 CAMLprim value mmdb_ml_dump_global(value mmdb)
 {
   CAMLparam1(mmdb);
-  CAMLlocal2(this_db, pulled_string);
+  CAMLlocal1(pulled_string);
 
-  this_db = Field(mmdb, 1);
-  MMDB_s *as_mmdb = (MMDB_s*)this_db;
+  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
   MMDB_entry_data_list_s *entry_data_list = NULL;
   int status = MMDB_get_metadata_as_entry_data_list(as_mmdb, &entry_data_list);
   check_status(status);
   char *pulled_from_db = data_from_dump(entry_data_list);
   pulled_string = caml_copy_string(pulled_from_db);
   free(pulled_from_db);
+  as_mmdb = NULL;
   CAMLreturn(pulled_string);
 }
 
 CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
 {
   CAMLparam2(ip, mmdb);
-  CAMLlocal2(pulled_string, db);
+  CAMLlocal1(pulled_string);
 
   unsigned int len = caml_string_length(ip);
   char *as_string = caml_strdup(String_val(ip));
@@ -158,8 +154,7 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
     caml_failwith("Could not copy IP address properly");
   }
 
-  db = Field(mmdb, 1);
-  MMDB_s *as_mmdb = (MMDB_s*)db;
+  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
   int gai_error = 0, mmdb_error = 0;
 
   MMDB_lookup_result_s *result = caml_stat_alloc(sizeof(*result));
@@ -172,13 +167,14 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
   free(result);
   free(as_string);
   free(pulled_from_db);
+  as_mmdb = NULL;
   CAMLreturn(pulled_string);
 }
 
 CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 {
   CAMLparam3(ip, query_list, mmdb);
-  CAMLlocal4(iter_count, caml_clean_result, query_r, db);
+  CAMLlocal3(iter_count, caml_clean_result, query_r);
 
   int total_len = 0, copy_count = 0, gai_error = 0, mmdb_error = 0;
   char *clean_result;
@@ -191,8 +187,8 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   if (strlen(as_string) != (size_t)len) {
     caml_failwith("Could not copy IP address properly");
   }
-  db = Field(mmdb, 1);
-  MMDB_s *as_mmdb = (MMDB_s*)db;
+
+  MMDB_s *as_mmdb = (MMDB_s*)Data_custom_val(mmdb);
   MMDB_lookup_result_s *result = caml_stat_alloc(sizeof(*result));
   *result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
   check_error(gai_error, mmdb_error);
@@ -222,7 +218,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   for (int i = 0; i < copy_count; free(query[i]), i++);
   free(query);
   query_r = caml_alloc(2, 0);
-
+  as_mmdb = NULL;
   switch (entry_data.type) {
   case MMDB_DATA_TYPE_BYTES:
     clean_result = caml_stat_alloc(entry_data.data_size + 1);

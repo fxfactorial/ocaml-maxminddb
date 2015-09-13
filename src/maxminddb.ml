@@ -1,7 +1,6 @@
-type unsafe_mmdb_handle
-
-type mmdb = { mutable initialized : bool;
-              handle : unsafe_mmdb_handle; }
+(* type mmdb = { mutable initialized : bool; *)
+(*               handle : unsafe_mmdb_handle; } *)
+type mmdb
 
 type location = { latitude : float;
                   longitude: float;
@@ -43,7 +42,7 @@ external version : unit -> string = "mmdb_ml_version"
 
 external create : path:string -> mmdb = "mmdb_ml_open"
 
-external close : mmdb -> unit = "mmdb_ml_close"
+(* external close : mmdb -> unit = "mmdb_ml_close" *)
 
 external dump_per_ip_raw : string -> mmdb -> string =
   "mmdb_ml_dump_per_ip"
@@ -110,8 +109,8 @@ let borders ?(lang=English) ~ip mmdb =
     continent_name = continent_name ~lang ~ip mmdb;
     iso_code = iso_code ip mmdb; }
 
-let with_mmdb ~path f =
-  let this_mmdb = create path in
-  let () = f this_mmdb in
-  close this_mmdb
+(* let with_mmdb ~path f = *)
+(*   let this_mmdb = create path in *)
+(*   let () = f this_mmdb in *)
+(*   close this_mmdb *)
 
