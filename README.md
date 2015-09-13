@@ -15,27 +15,28 @@ closes the `mmdb` handle for you.
 ```ocaml
 (* File named loc_dump.ml *)
 #require "maxminddb"
-let () = 
+
+let () =
   let some_ip = "172.56.31.240" in
   let this_mmdb = Maxminddb.create "etc/GeoLite2-City.mmdb" in
-    let loc = Maxminddb.location some_ip this_mmdb in
-    let open Maxminddb in
-    Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
-    |> print_endline;
-    let geo_borders = borders ~lang:French ~ip:some_ip this_mmdb in
-    Printf.sprintf
-      "%s %s %s %s %s"
-      geo_borders.postal_code
-      geo_borders.city_name
-      geo_borders.country_name
-      geo_borders.continent_name
-      geo_borders.iso_code
+  let loc = Maxminddb.location some_ip this_mmdb in
+  let open Maxminddb in
+  Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
+  |> print_endline;
+  let geo_borders = borders ~lang:French ~ip:some_ip this_mmdb in
+  Printf.sprintf
+    "%s %s %s %s %s"
+    geo_borders.postal_code
+    geo_borders.city_name
+    geo_borders.country_name
+    geo_borders.continent_name
+    geo_borders.iso_code
   |> print_endline
 ```
 
 And the corresponding result on the shell
 
-```ocaml
+```shell
 $ utop loc_dump.ml
 33.895900 -118.220100 803 America/Los_Angeles
 90221 Compton États-Unis Amérique du Nord US
@@ -82,10 +83,10 @@ well.
 
 let () =
   let some_ip = "69.12.169.82" in
-  let this_mmdb = Maxminddb.create_mmdb "etc/GeoLite2-City.mmdb" in 
-    match Maxminddb.lookup_path some_ip ["subdivisions";"0";"geoname_id"] this_mmdb with
-    | `Int i -> string_of_int i |> print_endline
-    | _ -> assert false
+  let this_mmdb = Maxminddb.create "etc/GeoLite2-City.mmdb" in
+  match Maxminddb.lookup_path some_ip ["subdivisions";"0";"geoname_id"] this_mmdb with
+  | `Int i -> string_of_int i |> print_endline
+  | _ -> assert false
 ```
 
 ```shell
