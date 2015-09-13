@@ -22,9 +22,7 @@ let () =
     let open Maxminddb in
     Printf.sprintf "%f %f %d %s" loc.latitude loc.longitude loc.metro_code loc.time_zone
     |> print_endline;
-    let geo_borders =
-      borders ~lang:French ~ip:some_ip this_mmdb
-    in
+    let geo_borders = borders ~lang:French ~ip:some_ip this_mmdb in
     Printf.sprintf
       "%s %s %s %s %s"
       geo_borders.postal_code
