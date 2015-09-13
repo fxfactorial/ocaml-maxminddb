@@ -122,6 +122,7 @@ CAMLprim value mmdb_ml_open(value s)
   mmdb_handle = caml_alloc_custom(&mmdb_custom_ops, sizeof(*this_db), 0, 1);
   check_status(status);
   memcpy(Data_custom_val(mmdb_handle), this_db, sizeof(*this_db));
+  free(this_db);
   free(copied);
   CAMLreturn(mmdb_handle);
 }
@@ -139,6 +140,7 @@ CAMLprim value mmdb_ml_dump_global(value mmdb)
   pulled_string = caml_copy_string(pulled_from_db);
   free(pulled_from_db);
   as_mmdb = NULL;
+  free(entry_data_list);
   CAMLreturn(pulled_string);
 }
 
@@ -167,6 +169,7 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
   free(result);
   free(as_string);
   free(pulled_from_db);
+  free(entry_data_list);
   as_mmdb = NULL;
   CAMLreturn(pulled_string);
 }
