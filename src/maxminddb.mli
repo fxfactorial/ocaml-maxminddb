@@ -45,10 +45,6 @@ val version : unit -> string
     file. Maxminddb comes with City, Country databases in etc *)
 val create : path:string -> mmdb
 
-(** Close a handle on a mmdb descriptor, raises exception if you try
-    to use the handle after you called closed on it. *)
-(* val close : mmdb -> unit *)
-
 (** Dumps the database as a string; if ip is provided then dumps the
     database for this particular ip address, if no ip provided then
     dumps Metainformation about the database itself. Note that you
@@ -82,6 +78,3 @@ val iso_code : ip:string -> mmdb -> string
 
 (** Shortcut providing top level geographical information  *)
 val borders : ?lang:languages -> ip:string -> mmdb -> borders
-
-(** Convenience function that opens and closes a mmdb for you *)
-(* val with_mmdb : path:string -> (mmdb -> unit) -> unit *)

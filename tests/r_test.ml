@@ -3,7 +3,6 @@ let (city, country) = "etc/GeoLite2-City.mmdb", "etc/GeoLite2-Country.mmdb"
 let (via_phone, some_ip) = "172.56.31.240", "69.12.169.82"
 
 let () =
-  (* Maxminddb.with_mmdb city begin fun this_mmdb -> *)
   let this_mmdb = Maxminddb.create city in
     [Maxminddb.version ();
      (match Maxminddb.lookup_path some_ip
