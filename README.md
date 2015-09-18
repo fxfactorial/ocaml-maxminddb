@@ -9,8 +9,7 @@ Lookups return polymorphic variants wrapping values like `bool`,
 
 I assume you have `libmaxminddb` already installed on your system.
 
-Here's a short example that uses a convenience function that
-closes the `mmdb` handle for you.
+Here's a short example of what you can do with the library.
 
 ```ocaml
 (* File named loc_dump.ml *)
