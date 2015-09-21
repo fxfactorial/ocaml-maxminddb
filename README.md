@@ -4,6 +4,11 @@ GeoIP)](http://dev.maxmind.com/geoip/).
 
 Lookups return polymorphic variants wrapping values like `bool`,
 `float`, `string` and `int`.
+install with
+
+```shell
+opam install maxminddb
+```
 
 # Code Examples
 
