@@ -4,15 +4,19 @@ GeoIP)](http://dev.maxmind.com/geoip/).
 
 Lookups return polymorphic variants wrapping values like `bool`,
 `float`, `string` and `int`.
-install with
+
+**Note** I assume you have `libmaxminddb` already installed on your
+system, on `OS X` this is easily done with `brew install
+libmaxminddb`, for other platforms checkout the installation
+instructions at the [libmaxminddb](https://github.com/maxmind/libmaxminddb) repo.
+
+Once you have the library on your machine, install the OCaml side with:
 
 ```shell
 opam install maxminddb
 ```
 
 # Code Examples
-
-I assume you have `libmaxminddb` already installed on your system.
 
 Here's a short example of what you can do with the library.
 
