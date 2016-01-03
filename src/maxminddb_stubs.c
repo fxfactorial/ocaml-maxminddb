@@ -122,8 +122,8 @@ CAMLprim value mmdb_ml_open(value s)
   mmdb_handle = caml_alloc_custom(&mmdb_custom_ops, sizeof(*this_db), 0, 1);
   check_status(status);
   memcpy(Data_custom_val(mmdb_handle), this_db, sizeof(*this_db));
-  free(this_db);
-  free(copied);
+  caml_stat_free(this_db);
+  caml_stat_free(copied);
   CAMLreturn(mmdb_handle);
 }
 
@@ -138,7 +138,7 @@ CAMLprim value mmdb_ml_dump_global(value mmdb)
   check_status(status);
   char *pulled_from_db = data_from_dump(entry_data_list);
   pulled_string = caml_copy_string(pulled_from_db);
-  free(pulled_from_db);
+  caml_stat_free(pulled_from_db);
   as_mmdb = NULL;
   free(entry_data_list);
   CAMLreturn(pulled_string);
@@ -166,9 +166,9 @@ CAMLprim value mmdb_ml_dump_per_ip(value ip, value mmdb)
   check_status(status);
   char *pulled_from_db = data_from_dump(entry_data_list);
   pulled_string = caml_copy_string(pulled_from_db);
-  free(result);
-  free(as_string);
-  free(pulled_from_db);
+  caml_stat_free(result);
+  caml_stat_free(as_string);
+  caml_stat_free(pulled_from_db);
   free(entry_data_list);
   as_mmdb = NULL;
   CAMLreturn(pulled_string);
@@ -195,7 +195,7 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   MMDB_lookup_result_s *result = caml_stat_alloc(sizeof(*result));
   *result = MMDB_lookup_string(as_mmdb, as_string, &gai_error, &mmdb_error);
   check_error(gai_error, mmdb_error);
-  free(as_string);
+  caml_stat_free(as_string);
 
   while (iter_count != Val_emptylist) {
     total_len++;
@@ -217,19 +217,23 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
 			       (const char *const *const)query);
   check_status(status);
   check_data(entry_data);
-  free(result);
-  for (int i = 0; i < copy_count; free(query[i]), i++);
-  free(query);
+  caml_stat_free(result);
+  for (int i = 0; i < copy_count; caml_stat_free(query[i]), i++);
+  caml_stat_free(query);
   query_r = caml_alloc(2, 0);
   as_mmdb = NULL;
   switch (entry_data.type) {
   case MMDB_DATA_TYPE_BYTES:
     clean_result = caml_stat_alloc(entry_data.data_size + 1);
     memcpy(clean_result, entry_data.bytes, entry_data.data_size);
+    caml_clean_result = caml_copy_string(clean_result);
+    caml_stat_free(clean_result);
     goto string_finish;
 
   case MMDB_DATA_TYPE_UTF8_STRING:
     clean_result = strndup(entry_data.utf8_string, entry_data.data_size);
+    caml_clean_result = caml_copy_string(clean_result);
+    free(clean_result);
     goto string_finish;
 
   case MMDB_DATA_TYPE_FLOAT:
@@ -269,8 +273,6 @@ CAMLprim value mmdb_ml_lookup_path(value ip, value query_list, value mmdb)
   }
 
  string_finish:
-  caml_clean_result = caml_copy_string(clean_result);
-  free(clean_result);
   Store_field(query_r, 0, polymorphic_variants.poly_string);
   Store_field(query_r, 1, caml_clean_result);
   CAMLreturn(query_r);
